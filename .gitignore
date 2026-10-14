@@ -1,0 +1,44 @@
+# Environment Variables
+.env
+.env.*
+
+# Python Virtual Environment
+myenv/
+venv/
+.venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+
+# ChromaDB
+chroma_db/
+vector_db/
+chroma.sqlite3
+
+# Downloads
+downloads/
+downloads/*
+!downloads/.gitkeep
+
+# Uploads
+uploads/
+uploads/*
+!uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
