@@ -89,6 +89,19 @@ def list_chats(db: Session, video_id: int, user_id: int):  # CHANGE
     )
 
 
+def list_user_chats(db: Session, user_id: int):
+    """Return all chats belonging to the logged-in user."""
+
+    return (
+        db.query(Chat)
+        .join(Video, Chat.video_id == Video.id)
+        .filter(Video.user_id == user_id)
+        .order_by(Chat.updated_at.desc(), Chat.id.desc())
+        .all()
+    )
+
+
+
 def get_chat(db: Session, chat_id: int, user_id: int):  # CHANGE
     return get_owned_chat(db, chat_id, user_id)
 

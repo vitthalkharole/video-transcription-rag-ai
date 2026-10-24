@@ -20,6 +20,7 @@ from backend.services.chat_service import (
     get_chat,
     send_message,
     delete_chat,
+   list_user_chats,
 )
 
 router = APIRouter(tags=["Chat"])
@@ -97,6 +98,19 @@ def create_chat_message(
         user_id=current_user.id,  # CHANGE
     )
 
+# 3. List all conversations for the logged-in user
+@router.get(
+    "/users/me/chats",
+    response_model=list[ChatResponse],
+)
+def get_all_user_chats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return list_user_chats(
+        db=db,
+        user_id=current_user.id,
+    )
 
 # 5. Delete a conversation
 @router.delete("/chats/{chat_id}")
