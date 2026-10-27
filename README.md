@@ -369,9 +369,9 @@ The main objectives of this project are to:
 
 **Vitthal Kharole**
 
-GitHub: [YOUR_GITHUB_PROFILE](https://github.com/YOUR_USERNAME)
+GitHub: [YOUR_GITHUB_PROFILE](https://github.com/vitthalkharole)
 
-LinkedIn: [YOUR_LINKEDIN_PROFILE](YOUR_LINKEDIN_URL)
+LinkedIn: [YOUR_LINKEDIN_PROFILE](https://www.linkedin.com/feed/update/urn:li:activity:7520823848817328128/)
 
 ## 📄 License
 
