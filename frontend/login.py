@@ -1,59 +1,60 @@
-
-
 import streamlit as st
 from api_client import login_user
 
 
 def render_login():
-    st.title("🎬 Video Transcription RAG AI")
-    st.subheader("Welcome Back!")
-    st.write(
-        "Login to transcribe videos and chat with their content."
+    st.markdown(
+        """
+        <style>
+            #MainMenu, footer {visibility: hidden;}
+            .block-container {padding-top: 4rem; max-width: 520px;}
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
 
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        email = st.text_input("Email")
-        password = st.text_input(
-            "Password",
-            type="password"
-        )
+    st.title("Welcome back")
+    st.caption("Log in to transcribe videos and chat with them.")
 
-        submitted = st.form_submit_button(
-            "Login",
-            use_container_width=True
-        )
+    notice = st.session_state.pop("auth_notice", None)
+    if notice:
+        st.success(notice)
 
-    if submitted:
-        if not username.strip() or not email.strip() or not password:
-            st.warning("Please fill in all fields.")
-        else:
-            try:
-                result = login_user(
-                    username.strip(),
-                    password,
-                    email.strip()
-                )
+    with st.container(border=True):
+        with st.form("login_form", border=False):
+            username = st.text_input("Username", placeholder="Your username")
+            email = st.text_input("Email", placeholder="you@example.com")
+            password = st.text_input(
+                "Password", type="password", placeholder="Your password"
+            )
+            submitted = st.form_submit_button(
+                "Log in", type="primary", use_container_width=True
+            )
 
-                token = result.get("access_token")
+        if submitted:
+            username, email = username.strip(), email.strip()
 
-                if token:
-                    st.session_state.token = token
-                    st.session_state.page = "workspace"
-                    st.success("Login successful!")
-                    st.rerun()
-                else:
-                    st.error(
-                        "Login failed: access token was not returned."
-                    )
+            if not username or not email or not password:
+                st.warning("Please fill in all fields.")
+            elif "@" not in email or "." not in email.split("@")[-1]:
+                st.error("Please enter a valid email address.")
+            else:
+                try:
+                    with st.spinner("Signing you in..."):
+                        result = login_user(username, password, email)
 
-            except Exception as exc:
-                st.error(f"Login failed: {exc}")
+                    token = result.get("access_token")
+                    if token:
+                        st.session_state.token = token
+                        st.session_state.page = "workspace"
+                        st.rerun()
+                    else:
+                        st.error("Login failed: no access token was returned.")
+                except Exception as exc:
+                    st.error(f"Login failed: {exc}")
 
-    st.divider()
-    st.write("Don't have an account?")
-
-    if st.button("Create an account"):
+    left, right = st.columns([3, 2])
+    left.caption("Don't have an account?")
+    if right.button("Sign up", use_container_width=True):
         st.session_state.page = "signup"
         st.rerun()
-

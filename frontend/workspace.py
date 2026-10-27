@@ -1,6 +1,4 @@
-"""Video RAG AI - simple Streamlit workspace."""
-from html import escape
-
+"""Video RAG AI - Streamlit workspace."""
 import streamlit as st
 
 from api_client import (
@@ -13,56 +11,88 @@ from api_client import (
 )
 
 # --------------------------------------------------
-# STYLING (kept small and simple)
+# STYLING
 # --------------------------------------------------
 CSS = """
 <style>
-.block-container { max-width: 900px; padding: 2.5rem 1.5rem 4rem 1.5rem; }
+#MainMenu, footer { visibility: hidden; }
+.block-container { max-width: 820px; padding: 2.5rem 1.5rem 6rem 1.5rem; }
 
-[data-testid="stSidebar"] { border-right: 1px solid rgba(128,128,128,0.25); }
-[data-testid="stSidebar"] .block-container { padding: 1.5rem 1rem; }
+/* ---------- Sidebar ---------- */
+[data-testid="stSidebar"] { background: rgba(128,128,128,0.07); }
+[data-testid="stSidebar"] .block-container { padding: 1.2rem 0.7rem; }
 
-.stButton > button {
-    border-radius: 10px;
-    padding: 0.5rem 0.9rem;
+.brand { font-size: 1.1rem; font-weight: 650; padding: 0.2rem 0.6rem 0.8rem 0.6rem; }
+.section-label {
+    font-size: 0.72rem; letter-spacing: 0.06em; opacity: 0.55;
+    padding: 0.8rem 0.6rem 0.3rem 0.6rem;
+}
+
+/* chat rows: flat, left aligned, no borders */
+[data-testid="stSidebar"] .stButton > button {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: inherit;
+    justify-content: flex-start;
+    text-align: left;
+    font-weight: 400;
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+}
+[data-testid="stSidebar"] .stButton > button p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     text-align: left;
 }
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(128,128,128,0.16);
+}
+/* active chat */
+[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+    background: rgba(128,128,128,0.22);
+    color: inherit;
+}
 
+/* the "..." menu button */
+[data-testid="stSidebar"] [data-testid="stPopover"] button {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0.5rem 0;
+    justify-content: center;
+}
+[data-testid="stSidebar"] [data-testid="stPopover"] button:hover {
+    background: rgba(128,128,128,0.16);
+}
+[data-testid="stSidebar"] [data-testid="stPopover"] button svg { display: none; }
+
+/* search box */
+[data-testid="stSidebar"] [data-testid="stTextInput"] input {
+    border-radius: 8px;
+    background: rgba(128,128,128,0.12);
+    border: none;
+}
+
+/* ---------- Main area ---------- */
+.stButton > button { border-radius: 8px; }
+
+/* chat messages: no boxes, like ChatGPT */
 [data-testid="stChatMessage"] {
-    border: 1px solid rgba(128,128,128,0.25);
-    border-radius: 14px;
-    padding: 1rem 1.2rem;
-    margin-bottom: 0.8rem;
+    background: transparent;
+    border: none;
+    padding: 0.6rem 0;
 }
-
-.card {
-    border: 1px solid rgba(128,128,128,0.3);
-    border-left: 4px solid #7c6cff;
-    border-radius: 12px;
-    padding: 1rem 1.2rem;
-    margin: 0.5rem 0 1.2rem 0;
-    background: rgba(124,108,255,0.07);
-}
-.card-label { font-size: 0.7rem; letter-spacing: 1px; opacity: 0.7; margin-bottom: 0.3rem; }
-.card-title { font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
-
-.hero { text-align: center; padding: 3rem 1rem 1.5rem 1rem; }
-.hero h1 { font-size: 2.2rem; margin-bottom: 0.6rem; }
-.hero p { opacity: 0.75; max-width: 560px; margin: 0 auto; line-height: 1.7; }
 </style>
 """
 
 
 # --------------------------------------------------
-# SMALL HELPERS
+# HELPERS
 # --------------------------------------------------
-def safe(value):
-    """Escape text before placing it inside HTML."""
-    return escape(str(value))
-
-
 def get_id(item):
-    """Return the 'id' of a video or chat dict (API may call it id or xxx_id)."""
+    """Return the id of a video or chat dict (API may use id, chat_id or video_id)."""
     if isinstance(item, dict):
         return item.get("id") or item.get("chat_id") or item.get("video_id")
     return None
@@ -114,25 +144,15 @@ def reset_chat():
 # --------------------------------------------------
 def show_sidebar(token):
     with st.sidebar:
-        st.markdown("## ▶ Video RAG AI")
-        st.caption("Understand every video")
+        st.markdown('<div class="brand">Video RAG AI</div>', unsafe_allow_html=True)
 
-        if st.button("＋ New chat", type="primary", use_container_width=True):
-            reset_chat()
-            st.rerun()
-
-        if st.button("＋ Process a video", use_container_width=True):
-            reset_chat()
-            st.session_state.show_video_form = True
-            st.rerun()
-
-        st.divider()
-        st.markdown("**Your chats**")
         search = st.text_input(
             "Search chats",
-            placeholder="Search your chats...",
+            placeholder="Search chats",
             label_visibility="collapsed",
         )
+
+        st.markdown('<div class="section-label">CHATS</div>', unsafe_allow_html=True)
 
         try:
             chats = get_chat_list(get_all_user_chats(token))
@@ -148,7 +168,7 @@ def show_sidebar(token):
             ]
 
         if not chats:
-            st.caption("No conversations found.")
+            st.caption("No conversations yet.")
 
         for chat in chats:
             chat_id = get_id(chat)
@@ -158,24 +178,30 @@ def show_sidebar(token):
             title = chat.get("title") or f"Conversation {chat_id}"
             is_active = str(st.session_state.active_chat_id) == str(chat_id)
 
-            col_open, col_delete = st.columns([5, 1])
+            col_open, col_menu = st.columns([6, 1], vertical_alignment="center")
             with col_open:
-                label = f"{'● ' if is_active else ''}{title}"
-                if st.button(label, key=f"open_{chat_id}", use_container_width=True, help=title):
+                if st.button(
+                    title,
+                    key=f"open_{chat_id}",
+                    type="primary" if is_active else "secondary",
+                    use_container_width=True,
+                    help=title,
+                ):
                     st.session_state.active_chat_id = chat_id
                     st.session_state.chat_video_id = chat.get("video_id")
                     st.session_state.chat_messages = []
                     st.session_state.loaded_chat_id = None
                     st.rerun()
-            with col_delete:
-                if st.button("🗑", key=f"delete_{chat_id}", help="Delete chat"):
-                    try:
-                        delete_chat(chat_id, token)
-                        if is_active:
-                            reset_chat()
-                        st.rerun()
-                    except Exception as error:
-                        st.error(f"Could not delete chat: {error}")
+            with col_menu:
+                with st.popover("⋯", use_container_width=True):
+                    if st.button("Delete chat", key=f"delete_{chat_id}"):
+                        try:
+                            delete_chat(chat_id, token)
+                            if is_active:
+                                reset_chat()
+                            st.rerun()
+                        except Exception as error:
+                            st.error(f"Could not delete chat: {error}")
 
         st.divider()
         if st.button("Log out", use_container_width=True):
@@ -189,11 +215,13 @@ def show_sidebar(token):
 # --------------------------------------------------
 def show_video_form(token):
     no_context = not st.session_state.video and st.session_state.active_chat_id is None
-    expanded = st.session_state.show_video_form or no_context
 
-    with st.expander("🎬 Add or process a video", expanded=expanded):
-        with st.form("video_form"):
-            url = st.text_input("Video URL", placeholder="Paste a supported YouTube video URL...")
+    with st.expander("Add a video", expanded=no_context):
+        with st.form("video_form", border=False):
+            url = st.text_input(
+                "Video URL",
+                placeholder="Paste a YouTube video URL",
+            )
             submitted = st.form_submit_button(
                 "Process video", type="primary", use_container_width=True
             )
@@ -202,7 +230,7 @@ def show_video_form(token):
         return
 
     if not url.strip():
-        st.warning("Paste a video URL to continue.")
+        st.warning("Please paste a video URL.")
         return
 
     try:
@@ -217,7 +245,6 @@ def show_video_form(token):
         return
 
     st.session_state.video = result
-    st.session_state.show_video_form = False
     reset_chat()
     st.rerun()
 
@@ -226,24 +253,22 @@ def show_video_form(token):
 # WELCOME SCREEN
 # --------------------------------------------------
 def show_welcome():
-    st.markdown(
-        """
-        <div class="hero">
-            <h1>✦ What video are we exploring today?</h1>
-            <p>Process a video, explore its transcript, and ask questions
-               in a natural conversation.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.markdown("")
+    st.markdown("## Ask questions about any video")
+    st.write(
+        "Process a YouTube video, read its transcript, and chat with "
+        "the content."
     )
 
-    col1, col2, col3 = st.columns(3)
-    col1.markdown("**📝 Transcribe**")
-    col1.caption("Turn your video into searchable text.")
-    col2.markdown("**🔎 Understand**")
-    col2.caption("Find key ideas without rewatching.")
-    col3.markdown("**💬 Ask questions**")
-    col3.caption("Chat with the video transcript.")
+    features = [
+        ("Transcribe", "Turn any video into searchable text."),
+        ("Summarize", "Get the key ideas without rewatching."),
+        ("Ask questions", "Chat with the transcript in plain language."),
+    ]
+    for col, (title, text) in zip(st.columns(3), features):
+        with col.container(border=True):
+            st.markdown(f"**{title}**")
+            st.caption(text)
 
     st.caption("AI answers may be imperfect. Please verify important details.")
 
@@ -263,25 +288,17 @@ def show_video_details(video, video_id, active_chat_id, chat_video_id):
         summary = video.get("summary") or video.get("video_summary")
         transcript = video.get("transcript") or video.get("full_transcript")
 
-        st.markdown(
-            f"""
-            <div class="card">
-                <div class="card-label">CURRENT VIDEO</div>
-                <div class="card-title">🎞️ {safe(title)}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        with st.container(border=True):
+            st.caption("CURRENT VIDEO")
+            st.markdown(f"**{title}**")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            with st.expander("📝 Summary"):
+            tab_summary, tab_transcript = st.tabs(["Summary", "Transcript"])
+            with tab_summary:
                 if summary:
                     st.markdown(to_text(summary))
                 else:
                     st.caption("No summary available.")
-        with col2:
-            with st.expander("📄 Transcript"):
+            with tab_transcript:
                 if transcript:
                     st.text_area(
                         "Transcript",
@@ -294,15 +311,9 @@ def show_video_details(video, video_id, active_chat_id, chat_video_id):
                     st.caption("No transcript available.")
 
     elif active_chat_id is not None:
-        st.markdown(
-            f"""
-            <div class="card">
-                <div class="card-label">SAVED CONVERSATION</div>
-                <div class="card-title">💬 Conversation #{safe(active_chat_id)}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        with st.container(border=True):
+            st.caption("SAVED CONVERSATION")
+            st.markdown(f"**Conversation #{active_chat_id}**")
 
 
 # --------------------------------------------------
@@ -310,11 +321,11 @@ def show_video_details(video, video_id, active_chat_id, chat_video_id):
 # --------------------------------------------------
 def show_start_chat(video_id, token):
     if video_id is None:
-        st.info("Process a video before starting a conversation.")
+        st.info("Process a video to start a conversation.")
         return
 
-    st.subheader("Start chatting with your video")
-    st.caption("Answers will be based on the processed video content.")
+    st.markdown("#### Start a conversation")
+    st.caption("Answers are based on the processed video.")
 
     if st.button("Start conversation", type="primary", use_container_width=True):
         try:
@@ -365,7 +376,6 @@ def show_chat(chat_id, token):
     if not load_messages(chat_id, token):
         return
 
-    st.subheader("Conversation")
     messages = st.session_state.chat_messages
 
     if not messages:
@@ -375,7 +385,7 @@ def show_chat(chat_id, token):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    question = st.chat_input("Ask anything about this video...")
+    question = st.chat_input("Ask anything about this video")
     if not question or not question.strip():
         return
 
@@ -414,7 +424,6 @@ def render_workspace():
         "chat_video_id": None,
         "chat_messages": [],
         "loaded_chat_id": None,
-        "show_video_form": False,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -422,8 +431,7 @@ def render_workspace():
 
     show_sidebar(token)
 
-    st.title("Video workspace")
-    st.caption("Transcribe, explore, and ask questions about video content.")
+    st.title("Workspace")
 
     show_video_form(token)
 
